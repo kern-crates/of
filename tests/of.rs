@@ -33,3 +33,22 @@ fn test_pcsi() {
     assert_eq!(of_pcsi.cpu_off().unwrap(), 0x84000002);
     assert_eq!(of_pcsi.cpu_suspend().unwrap(), 0xC4000001);
 }
+
+#[test]
+fn test_platform() {
+    const OF_DEFAULT_BUS_MATCH_TABLE: [&'static [&'static str];4] = [
+        &["simple-bus"],
+        &["simple-mfd"],
+        &["simple-isa"],
+        &["arm,amba-bus"],
+    ];
+    setup();
+    for b in OF_DEFAULT_BUS_MATCH_TABLE {
+        let bus_nodes = of::find_compatible_node(b);
+        if b[0].eq("simple-bus") {
+           assert_eq!(bus_nodes.count(), 1);
+        } else {
+           assert_eq!(bus_nodes.count(), 0);
+        }
+    }
+}

@@ -8,6 +8,8 @@ pub mod kernel_nodes;
 pub use fdt::standard_nodes::Cpu;
 pub use kernel_nodes::*;
 
+pub type OfNode<'a> = fdt::node::FdtNode<'a, 'a>;
+
 mod parsing;
 
 static mut MY_FDT_PTR: Option<*const u8> = None;
@@ -55,12 +57,32 @@ pub fn machin_name() -> &'static str {
 /// one of the strings inside of `with`
 pub fn find_compatible_node(
     with: &'static [&'static str],
-) -> impl Iterator<Item = fdt::node::FdtNode<'static, 'static>> {
+) -> impl Iterator<Item = OfNode<'static>> {
     MY_MACHINE_FDT.0.all_nodes().filter(|n| {
         n.compatible()
             .and_then(|compats| compats.all().find(|c| with.contains(c)))
             .is_some()
     })
+}
+
+pub fn of_device_is_available(node: OfNode<'static>) -> bool {
+    let status = node
+            .properties()
+            .find(|p| p.name == "status");
+    let ret = match status {
+        None => true,
+        Some(st) => {
+            let res: &'static str = core::str::from_utf8(st.value)
+                    .map(|s| s.trim_end_matches('\0'))
+                    .ok().unwrap();
+            if res.eq("okay") || res.eq("ok") {
+                true
+            } else {
+                false
+            }
+        },
+    };
+    ret
 }
 
 pub fn bootargs() -> Option<&'static str> {
