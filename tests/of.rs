@@ -52,3 +52,13 @@ fn test_platform() {
         }
     }
 }
+
+#[test]
+fn test_irqcontroler() {
+    const I2C_COMPATIABLE: &'static [&'static str] = &["snps,designware-i2c"];
+    setup();
+    let i2c_node = of::find_compatible_node(I2C_COMPATIABLE).next().unwrap();
+    let irq_controler = of::of_irq_find_parent(i2c_node).unwrap();
+    assert_eq!("arm,gic-400", irq_controler.compatible());
+    assert_eq!(3, irq_controler.interrupt_cells());
+}
