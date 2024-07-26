@@ -68,23 +68,3 @@ impl Pcsi {
             .map(|p| BigEndianU32::from_bytes(p.value).unwrap().get())
     }
 }
-
-#[derive(Clone, Copy)]
-pub struct IrqControler {
-    pub(crate) node: fdt::node::FdtNode<'static, 'static>,
-}
-
-impl IrqControler {
-    /// `compatible` property
-    pub fn compatible(self) -> &'static str {
-        self.node.compatible().unwrap().first()
-    }
-    /// `interrupt-cells` property
-    pub fn interrupt_cells(self) -> u32 {
-        self.node
-            .properties()
-            .find(|p| p.name == "#interrupt-cells")
-            .map(|p| BigEndianU32::from_bytes(p.value).unwrap().get())
-            .expect("Irq not have interrupt_cells is unimpossible")
-    }
-}
