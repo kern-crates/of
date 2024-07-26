@@ -52,3 +52,18 @@ fn test_platform() {
         }
     }
 }
+
+#[test]
+fn test_irqcontroler() {
+    const I2C_COMPATIABLE: &'static [&'static str] = &["snps,designware-i2c"];
+    setup();
+    let i2c_node = of::find_compatible_node(I2C_COMPATIABLE).next().unwrap();
+    let irq_controler = i2c_node.interrupt_parent().unwrap();
+    assert_eq!("arm,gic-400", irq_controler.compatible().unwrap().first());
+    assert_eq!(3, irq_controler.interrupt_cells().unwrap());
+    let mut res:[u32;3] = [0;3];
+    for i in 0..irq_controler.interrupt_cells().unwrap() {
+        res[i] = of::of_property_read_u32(i2c_node, "interrupts", i).unwrap();
+    }
+    assert_eq!([0,0xcf, 0x04], res);
+}

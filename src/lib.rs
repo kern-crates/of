@@ -12,6 +12,8 @@ pub type OfNode<'a> = fdt::node::FdtNode<'a, 'a>;
 
 mod parsing;
 
+use crate::parsing::BigEndianU32;
+
 static mut MY_FDT_PTR: Option<*const u8> = None;
 
 lazy_static::lazy_static! {
@@ -83,6 +85,15 @@ pub fn of_device_is_available(node: OfNode<'static>) -> bool {
         },
     };
     ret
+}
+
+pub fn of_property_read_u32(node: OfNode<'static>, name: &'static str, index: usize) -> Option<u32> {
+    let property = node.property(name)?;
+    let start_idx = index * 4 ;
+    if start_idx +4  > property.value.len() {
+        return None;
+    }
+    Some(BigEndianU32::from_bytes(&property.value[start_idx..]).unwrap().get())
 }
 
 pub fn bootargs() -> Option<&'static str> {
