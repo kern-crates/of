@@ -36,7 +36,7 @@ fn test_pcsi() {
 
 #[test]
 fn test_platform() {
-    const OF_DEFAULT_BUS_MATCH_TABLE: [&'static [&'static str];4] = [
+    const OF_DEFAULT_BUS_MATCH_TABLE: [&'static [&'static str]; 4] = [
         &["simple-bus"],
         &["simple-mfd"],
         &["simple-isa"],
@@ -46,9 +46,9 @@ fn test_platform() {
     for b in OF_DEFAULT_BUS_MATCH_TABLE {
         let bus_nodes = of::find_compatible_node(b);
         if b[0].eq("simple-bus") {
-           assert_eq!(bus_nodes.count(), 1);
+            assert_eq!(bus_nodes.count(), 1);
         } else {
-           assert_eq!(bus_nodes.count(), 0);
+            assert_eq!(bus_nodes.count(), 0);
         }
     }
 }
@@ -61,9 +61,24 @@ fn test_irqcontroler() {
     let irq_controler = i2c_node.interrupt_parent().unwrap();
     assert_eq!("arm,gic-400", irq_controler.compatible().unwrap().first());
     assert_eq!(3, irq_controler.interrupt_cells().unwrap());
-    let mut res:[u32;3] = [0;3];
+    let mut res: [u32; 3] = [0; 3];
     for i in 0..irq_controler.interrupt_cells().unwrap() {
         res[i] = of::of_property_read_u32(i2c_node, "interrupts", i).unwrap();
     }
-    assert_eq!([0,0xcf, 0x04], res);
+    assert_eq!([0, 0xcf, 0x04], res);
+}
+
+#[test]
+fn test_phandle_arg() {
+    const I2C_COMPATIABLE: &'static [&'static str] = &["snps,designware-i2c"];
+    setup();
+
+    let i2c_node = of::find_compatible_node(I2C_COMPATIABLE).next().unwrap();
+    let phandle_arg = of::of_parse_phandle_with_args(i2c_node, "clocks", Some("#clock-cells"), 0)
+        .expect("i2c no clocks");
+    assert_eq!(phandle_arg.args_count, 1);
+    assert_eq!(phandle_arg.args[0], 75); // LSP0_PCLK
+    let phandle_arg = of::of_parse_phandle_with_args(i2c_node, "clocks", Some("#clock-cells"), 1)
+        .expect("i2c no clocks");
+    assert_eq!(phandle_arg.args[0], 73); // LSP0_WCLK
 }
