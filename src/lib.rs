@@ -142,7 +142,7 @@ pub fn cpus() -> Option<impl Iterator<Item = fdt::standard_nodes::Cpu<'static, '
 }
 
 pub fn find_phandle(phandle: u32) -> Option<OfNode<'static>> {
-    MY_MACHINE_FDT.0.find_phandle(phandle)
+    MY_MACHINE_FDT.as_ref().and_then(|fdt|fdt.0.find_phandle(phandle))
 }
 
 pub fn of_parse_phandle_with_args(
