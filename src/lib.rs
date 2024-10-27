@@ -5,7 +5,6 @@
 #![allow(missing_docs)]
 pub struct MachineFdt<'a>(fdt::Fdt<'a>);
 pub mod kernel_nodes;
-use core::iter::Filter;
 
 pub use fdt::standard_nodes::Cpu;
 pub use kernel_nodes::*;
