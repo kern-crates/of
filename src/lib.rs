@@ -91,6 +91,7 @@ pub fn find_compatible_node(
         .unwrap()
 }
 
+/// Whether the device pointed by the node is available
 pub fn of_device_is_available(node: OfNode<'static>) -> bool {
     let status = node.properties().find(|p| p.name == "status");
     let ret = match status {
@@ -106,6 +107,7 @@ pub fn of_device_is_available(node: OfNode<'static>) -> bool {
     ret
 }
 
+/// Read a u32 property from a node
 pub fn of_property_read_u32(
     node: OfNode<'static>,
     name: &'static str,
@@ -123,12 +125,14 @@ pub fn of_property_read_u32(
     )
 }
 
+/// Bootargs from the FDT
 pub fn bootargs() -> Option<&'static str> {
     MY_MACHINE_FDT
         .as_ref()
         .and_then(|fdt| fdt.0.chosen().bootargs())
 }
 
+/// Returns the size of the FDT
 pub fn fdt_size() -> usize {
     MY_MACHINE_FDT
         .as_ref()
@@ -136,6 +140,7 @@ pub fn fdt_size() -> usize {
         .unwrap_or(0)
 }
 
+/// All memory nodes in the FDT
 pub fn memory_nodes() -> Option<impl Iterator<Item = Memory>> {
     MY_MACHINE_FDT.as_ref().map(|fdt| {
         fdt.0
@@ -144,6 +149,7 @@ pub fn memory_nodes() -> Option<impl Iterator<Item = Memory>> {
     })
 }
 
+/// Psci node in the FDT
 pub fn pcsi() -> Option<kernel_nodes::Pcsi> {
     MY_MACHINE_FDT.as_ref().and_then(|fdt| {
         fdt.0
@@ -152,16 +158,19 @@ pub fn pcsi() -> Option<kernel_nodes::Pcsi> {
     })
 }
 
+/// CPU nodes in the FDT
 pub fn cpus() -> Option<impl Iterator<Item = fdt::standard_nodes::Cpu<'static, 'static>>> {
     MY_MACHINE_FDT.as_ref().map(|fdt| fdt.0.cpus())
 }
 
+/// Find a phandle in the FDT
 pub fn find_phandle(phandle: u32) -> Option<OfNode<'static>> {
     MY_MACHINE_FDT
         .as_ref()
         .and_then(|fdt| fdt.0.find_phandle(phandle))
 }
 
+/// Parse a phandle with arguments
 pub fn of_parse_phandle_with_args(
     node: OfNode<'static>,
     list_name: &'static str,
