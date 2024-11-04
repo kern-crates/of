@@ -6,6 +6,7 @@ authors = ["Guo Weikang <guoweikang.kernel@gmail.com>"]
 description = "A pure-Rust #![no_std] crate for parsing Flattened Devicetrees"
 license = "GPL-3.0-or-later OR Apache-2.0"
 keywords = ["Starry"]
+documentation = "https://starry-os.github.io/of"
 
 [dependencies]
 fdt = "0.1.5"
