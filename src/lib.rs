@@ -22,12 +22,17 @@ use crate::parsing::BigEndianU32;
 static mut MY_FDT_PTR: Option<*const u8> = None;
 
 lazy_static::lazy_static! {
-    static ref MY_MACHINE_FDT: Option<MachineFdt<'static>> = 
+    static ref MY_MACHINE_FDT: Option<MachineFdt<'static>> =
         unsafe {init_from_ptr(MY_FDT_PTR.unwrap())};
 }
 
-pub fn fdt_available()->bool{
-    unsafe {MY_FDT_PTR.is_some()}
+/// Whether the FDT is available
+///
+/// # Safety
+// The caller must ensure that the FDT isn't mutated while this function is called.
+pub unsafe fn fdt_available() -> bool {
+    #[allow(static_mut_refs)]
+    MY_FDT_PTR.is_some()
 }
 
 pub fn get_fdt_ptr() -> Option<*const u8> {
@@ -48,22 +53,25 @@ unsafe fn init_from_ptr(virt_addr: *const u8) -> Option<MachineFdt<'static>> {
 
 /// Root Node found model or first compatible
 pub fn machin_name() -> Option<&'static str> {
-    MY_MACHINE_FDT.as_ref().map(|f|f.0.root()).map(|root_node|{
-        let model = root_node
-        .properties()
-        .find(|p| p.name == "model")
-        .and_then(|p| {
-            core::str::from_utf8(p.value)
-            .map(|s| s.trim_end_matches('\0'))
-            .ok()
-        });
-        
-        if let Some(name) = model {
-            name
-        } else {
-            root_node.compatible().first()
-        }
-    })
+    MY_MACHINE_FDT
+        .as_ref()
+        .map(|f| f.0.root())
+        .map(|root_node| {
+            let model = root_node
+                .properties()
+                .find(|p| p.name == "model")
+                .and_then(|p| {
+                    core::str::from_utf8(p.value)
+                        .map(|s| s.trim_end_matches('\0'))
+                        .ok()
+                });
+
+            if let Some(name) = model {
+                name
+            } else {
+                root_node.compatible().first()
+            }
+        })
 }
 
 /// Searches for a node which contains a `compatible` property and contains
@@ -71,11 +79,16 @@ pub fn machin_name() -> Option<&'static str> {
 pub fn find_compatible_node(
     with: &'static [&'static str],
 ) -> impl Iterator<Item = OfNode<'static>> {
-    MY_MACHINE_FDT.as_ref().map(|fdt|fdt.0.all_nodes().filter(|n| {
-        n.compatible()
-            .and_then(|compats| compats.all().find(|c| with.contains(c)))
-            .is_some()
-    })).unwrap()
+    MY_MACHINE_FDT
+        .as_ref()
+        .map(|fdt| {
+            fdt.0.all_nodes().filter(|n| {
+                n.compatible()
+                    .and_then(|compats| compats.all().find(|c| with.contains(c)))
+                    .is_some()
+            })
+        })
+        .unwrap()
 }
 
 pub fn of_device_is_available(node: OfNode<'static>) -> bool {
@@ -87,11 +100,7 @@ pub fn of_device_is_available(node: OfNode<'static>) -> bool {
                 .map(|s| s.trim_end_matches('\0'))
                 .ok()
                 .unwrap();
-            if res.eq("okay") || res.eq("ok") {
-                true
-            } else {
-                false
-            }
+            res.eq("okay") || res.eq("ok")
         }
     };
     ret
@@ -115,33 +124,42 @@ pub fn of_property_read_u32(
 }
 
 pub fn bootargs() -> Option<&'static str> {
-    MY_MACHINE_FDT.as_ref().and_then(|fdt|fdt.0.chosen().bootargs())
+    MY_MACHINE_FDT
+        .as_ref()
+        .and_then(|fdt| fdt.0.chosen().bootargs())
 }
 
 pub fn fdt_size() -> usize {
-    MY_MACHINE_FDT.as_ref().map(|fdt|fdt.0.total_size()).unwrap_or(0)
+    MY_MACHINE_FDT
+        .as_ref()
+        .map(|fdt| fdt.0.total_size())
+        .unwrap_or(0)
 }
 
 pub fn memory_nodes() -> Option<impl Iterator<Item = Memory>> {
-    MY_MACHINE_FDT.as_ref().map(|fdt|
+    MY_MACHINE_FDT.as_ref().map(|fdt| {
         fdt.0
-        .find_all_nodes("/memory")
-        .map(|m| kernel_nodes::Memory { node: m }))
+            .find_all_nodes("/memory")
+            .map(|m| kernel_nodes::Memory { node: m })
+    })
 }
 
 pub fn pcsi() -> Option<kernel_nodes::Pcsi> {
-    MY_MACHINE_FDT.as_ref().and_then(|fdt|fdt
-        .0
-        .find_node("/psci")
-        .map(|n| kernel_nodes::Pcsi { node: n }))
+    MY_MACHINE_FDT.as_ref().and_then(|fdt| {
+        fdt.0
+            .find_node("/psci")
+            .map(|n| kernel_nodes::Pcsi { node: n })
+    })
 }
 
 pub fn cpus() -> Option<impl Iterator<Item = fdt::standard_nodes::Cpu<'static, 'static>>> {
-    MY_MACHINE_FDT.as_ref().map(|fdt|fdt.0.cpus())
+    MY_MACHINE_FDT.as_ref().map(|fdt| fdt.0.cpus())
 }
 
 pub fn find_phandle(phandle: u32) -> Option<OfNode<'static>> {
-    MY_MACHINE_FDT.as_ref().and_then(|fdt|fdt.0.find_phandle(phandle))
+    MY_MACHINE_FDT
+        .as_ref()
+        .and_then(|fdt| fdt.0.find_phandle(phandle))
 }
 
 pub fn of_parse_phandle_with_args(

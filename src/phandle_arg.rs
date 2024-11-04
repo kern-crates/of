@@ -82,14 +82,13 @@ impl Iterator for OfPhandleIterator {
 
         // parse cell args
         let mut args = [0; MAX_PHANDLE_ARGS];
-        for i in 0..self.cell_count {
+        for arg in args.iter_mut().take(self.cell_count) {
             if self.curr_index >= self.lists_len {
                 panic!("Cell count over lists len")
             }
-            args[i] = BigEndianU32::from_bytes(&self.lists.value[self.curr_index..])
+            *arg = BigEndianU32::from_bytes(&self.lists.value[self.curr_index..])
                 .unwrap()
                 .get();
-
             // move cusor
             self.curr_index += 4;
         }

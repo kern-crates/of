@@ -10,7 +10,7 @@ fn setup() {
 fn test_module() {
     setup();
     let model = of::machin_name();
-    assert_eq!(model, "BST A1000B FAD-A");
+    assert_eq!(model.unwrap(), "BST A1000B FAD-A");
 }
 
 #[test]
